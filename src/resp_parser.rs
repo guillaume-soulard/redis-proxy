@@ -12,7 +12,7 @@ pub fn parse_resp(item: &String) -> u32 {
                 .parse::<u32>()
                 .unwrap_or_else(|e| panic!("can't parse resp: {} : {}", item, e))
         },
-        c @ '$' => {
+        c @ ('$' | '=') => {
             let to_parse = item.replace(&String::from(c), "")
                 .replace("\r\n", "");
             if to_parse == "" {
@@ -27,7 +27,7 @@ pub fn parse_resp(item: &String) -> u32 {
                 1
             }
         }
-        '+' | '-' | ':' | '&' | '_' | '#' | ',' | '(' | '!' | '=' => {
+        '+' | '-' | ':' | '&' | '_' | '#' | ',' | '(' | '!' => {
             0
         }
         c @ ('%' | '|') => {
