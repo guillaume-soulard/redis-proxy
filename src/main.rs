@@ -4,6 +4,7 @@ use crate::resp_parser::parse_resp;
 use std::env::Args;
 use std::io::{BufRead, BufReader, ErrorKind, Write};
 use std::net::{TcpListener, TcpStream};
+use std::thread::spawn;
 
 const DEFAULT_LISTEN_PORT: u16 = 36379;
 const DEFAULT_LISTEN_HOST: &str = "127.0.0.1";
@@ -39,19 +40,21 @@ fn main() {
     let listener = TcpListener::bind(format!("{}:{}", listening_host, listening_port)).unwrap();
     println!("Listening on {}:{}...", listening_host, listening_port);
     for stream in listener.incoming() {
-        let mut s = stream.unwrap();
-        let addr = s.local_addr().unwrap();
-        println!(
-            "New connection from {}:{}",
-            addr.ip().to_string(),
-            addr.port()
-        );
-        handle_connection(&mut s, &target_host, target_port);
-        println!(
-            "Connection closed by client : {}:{}",
-            addr.ip().to_string(),
-            addr.port()
-        );
+        spawn(move || {
+            let mut s = stream.unwrap();
+            let addr = s.local_addr().unwrap();
+            println!(
+                "New connection from {}:{}",
+                addr.ip().to_string(),
+                addr.port()
+            );
+            handle_connection(&mut s, &target_host, target_port);
+            println!(
+                "Connection closed by client : {}:{}",
+                addr.ip().to_string(),
+                addr.port()
+            );
+        });
     }
 }
 
