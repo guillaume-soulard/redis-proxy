@@ -1,4 +1,5 @@
 mod resp_parser;
+mod redis_io;
 
 use crate::resp_parser::parse_resp;
 use std::env::Args;
@@ -40,15 +41,16 @@ fn main() {
     let listener = TcpListener::bind(format!("{}:{}", listening_host, listening_port)).unwrap();
     println!("Listening on {}:{}...", listening_host, listening_port);
     for stream in listener.incoming() {
+        let mut cloned_stream = stream.unwrap().try_clone().unwrap();
+        let target_host_clone = target_host.clone();
         spawn(move || {
-            let mut s = stream.unwrap();
-            let addr = s.local_addr().unwrap();
+            let addr = cloned_stream.local_addr().unwrap();
             println!(
                 "New connection from {}:{}",
                 addr.ip().to_string(),
                 addr.port()
             );
-            handle_connection(&mut s, &target_host, target_port);
+            handle_connection(&mut cloned_stream, &target_host_clone, target_port);
             println!(
                 "Connection closed by client : {}:{}",
                 addr.ip().to_string(),
@@ -62,7 +64,6 @@ fn handle_connection(stream: &mut TcpStream, target_host: &String, target_port: 
     println!("Opening new connection to target redis at {}:{}...", target_host, target_port);
     let mut down_stream = TcpStream::connect(format!("{}:{}", target_host, target_port)).unwrap();
     println!("New connection opened at {}:{}...", down_stream.local_addr().unwrap().ip(), down_stream.local_addr().unwrap().port());
-    stream.set_read_timeout(Some(std::time::Duration::from_secs(1))).unwrap();
     loop {
         {
             match read_redis_protocol(stream) {
