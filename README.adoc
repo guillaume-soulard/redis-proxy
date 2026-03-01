@@ -1,1 +1,27 @@
 = Redis proxy
+
+Redis proxy is a server that act as a redis standalone server but shadow the real redis topology implementation (standalone, master-slave or cluster).
+
+[shell]
+----
+./redis-proxy config.conf
+----
+
+.Configuration file
+----
+port 36379
+listen 127.0.0.1
+
+downstream-mode standalone|sentinel|cluster
+
+downstream-connection 127.0.0.1:6379
+#downstream-connection 10.0.0.1:26379,10.0.0.2:26379,10.0.0.3:26379
+#downstream-connection 10.0.0.1:26379,10.0.0.2:26379,10.0.0.3:26379
+
+upstream-mode standalone|sentinel|cluster
+
+upstream-connection 127.0.0.1:6379
+#upstream-connection 10.0.0.1:26379,10.0.0.2:26379,10.0.0.3:26379
+#upstream-connection 10.0.0.1:26379,10.0.0.2:26379,10.0.0.3:26379
+
+----
