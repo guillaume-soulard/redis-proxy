@@ -1,14 +1,19 @@
+use crate::resp_parser::parse_resp;
 use std::io::{BufRead, BufReader, ErrorKind, Write};
 use std::net::TcpStream;
-use crate::resp_parser::parse_resp;
 
 pub struct RedisStream<'a> {
     stream: &'a mut TcpStream,
+    buf_reader: &'a mut BufReader<&'a mut TcpStream>,
 }
 
 impl<'a> RedisStream<'a> {
-    pub fn new(stream: &'a mut TcpStream) -> RedisStream<'a> {
-        RedisStream { stream }
+    pub fn new(stream: &'a mut TcpStream,
+               buf_reader: &'a mut BufReader<&'a mut TcpStream>) -> RedisStream<'a> {
+        RedisStream {
+            stream,
+            buf_reader,
+        }
     }
 
     pub fn send(&mut self, redis_protocol: &String) {
@@ -19,7 +24,6 @@ impl<'a> RedisStream<'a> {
             });
     }
     pub fn receive(&mut self) -> Option<String> {
-        let mut buf_reader = BufReader::new(self.stream.try_clone().unwrap());
         let mut line = String::new();
         let mut remaining_lines_to_read = 0;
         let mut command = String::new();
@@ -28,7 +32,7 @@ impl<'a> RedisStream<'a> {
             if remaining_lines_to_read > 0 {
                 remaining_lines_to_read -= 1;
             }
-            let read_bytes = match buf_reader.read_line(&mut line) {
+            let read_bytes = match self.buf_reader.read_line(&mut line) {
                 Ok(bytes) => {
                     if bytes == 0 {
                         return None;

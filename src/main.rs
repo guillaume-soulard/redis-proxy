@@ -2,6 +2,7 @@ mod resp_parser;
 mod redis_io;
 
 use std::env::Args;
+use std::io::BufReader;
 use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
 use crate::redis_io::RedisStream;
@@ -49,11 +50,15 @@ fn main() {
                 addr.ip().to_string(),
                 addr.port()
             );
-            let mut up_stream_client = RedisStream::new(&mut cloned_stream);
+            let mut up_stream_binding = cloned_stream.try_clone().unwrap();
+            let mut up_stream_buf_reader = BufReader::new(&mut up_stream_binding);
+            let mut up_stream_client = RedisStream::new(&mut cloned_stream, &mut up_stream_buf_reader);
             println!("Opening new connection to target");
             let mut down_stream = TcpStream::connect(format!("{}:{}", target_host_clone, target_port)).unwrap();
             println!("New connection opened");
-            let mut down_stream_client = RedisStream::new(&mut down_stream);
+            let mut down_stream_binding = down_stream.try_clone().unwrap();
+            let mut down_stream_buf_reader = BufReader::new(&mut down_stream_binding);
+            let mut down_stream_client = RedisStream::new(&mut down_stream, &mut down_stream_buf_reader);
             handle_connection(&mut up_stream_client, &mut down_stream_client);
             println!(
                 "Connection closed by client : {}:{}",
