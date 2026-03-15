@@ -1,7 +1,7 @@
+use crate::redis_io::RedisStream;
 use std::io::BufReader;
 use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
-use crate::redis_io::RedisStream;
 
 pub fn start_server(listening_host: String,
                     listening_port: u16,

@@ -1,4 +1,4 @@
-use crate::resp_parser::parse_resp;
+use crate::resp::get_remaining_lines_to_read;
 use std::io::{BufRead, BufReader, ErrorKind, Write};
 use std::net::TcpStream;
 
@@ -58,7 +58,7 @@ impl<'a> RedisStream<'a> {
             if read_bytes.unwrap() == 0 {
                 return Some(String::new());
             }
-            let i = parse_resp(&line);
+            let i = get_remaining_lines_to_read(&line);
             remaining_lines_to_read += i;
             command.push_str(&line);
             if remaining_lines_to_read == 0 {
