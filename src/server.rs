@@ -1,13 +1,14 @@
+use std::collections::HashMap;
 use crate::redis_io::RedisStream;
 use std::io::BufReader;
 use std::net::{TcpListener, TcpStream};
 use std::thread::spawn;
+use crate::resp::{get_command_name, RespBuilder};
 
 pub fn start_server(listening_host: String,
                     listening_port: u16,
                     target_host: String,
-                    target_port: u16,
-                    target_topology: String) {
+                    target_port: u16) {
     let listener = TcpListener::bind(format!("{}:{}", listening_host, listening_port)).unwrap();
     println!("Listening on {}:{}...", listening_host, listening_port);
     for stream in listener.incoming() {
@@ -41,12 +42,28 @@ pub fn start_server(listening_host: String,
 
 fn handle_connection(up_stream_client: &mut RedisStream,
                      down_stream_client: &mut RedisStream) {
+    let mut m:HashMap<String, Box<dyn Fn(&mut RedisStream, &String)>> = HashMap::new();
+    m.insert(String::from("role"), Box::new(|up_stream_client, _| {
+        let mut role_response = RespBuilder::new();
+        role_response.append(&String::from("proxy"));
+        up_stream_client.send(&role_response.build());
+    }));
     loop {
         {
             match up_stream_client.receive() {
                 Some(r) => {
-                    if r.to_lowercase().contains("role") {
-                        up_stream_client.send(&"*1\r\n$5proxy\r\n".to_string());
+                    match get_command_name(&r) {
+                        Some(command_name) => {
+                            let command = m.get(&command_name.to_lowercase());
+                            match command {
+                                Some(cmd) => {
+                                    cmd(up_stream_client, &r);
+                                    continue;
+                                },
+                                None => (),
+                            }
+                        }
+                        None => continue,
                     }
                     if r == "" {
                         continue;

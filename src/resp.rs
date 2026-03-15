@@ -58,6 +58,19 @@ pub fn get_remaining_lines_to_read(item: &String) -> u32 {
     }
 }
 
+pub fn get_command_name(item: &String) -> Option<String> {
+    item.split_once("\r\n")
+        .map(|(command, _)| {
+            command.split_once("\r\n")
+                .map(|(command, _)| {
+                    command.split_once("\r\n")
+                        .map(|(command, _)| command.to_string())
+                        .unwrap_or(String::from(""))
+                })
+                .unwrap_or(String::from(""))
+        })
+}
+
 pub struct RespBuilder {
     resp_type: char,
     protocol: Vec<String>,
@@ -71,14 +84,14 @@ impl RespBuilder {
         }
     }
     pub fn build(&self) -> String {
-        self.protocol.join("\r\n") + "\r\n"
+        self.protocol.join("")
     }
     pub fn append(&mut self, item: &String) {
         if self.resp_type == ARRAY {
             if self.protocol.len() == 0 {
-                self.protocol.push(format!("{}\r\n", item.len()));
+                self.protocol.push("*1\r\n".to_string());
             } else {
-                self.protocol[0] = format!("{}\r\n", item.len());
+                self.protocol[0] = format!("*{}\r\n", self.protocol.len() + 1);
             }
         }
         self.protocol.push(format!("${}\r\n{}\r\n", item.len(), item.clone()));

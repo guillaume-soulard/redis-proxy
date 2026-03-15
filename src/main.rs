@@ -2,12 +2,8 @@ mod resp;
 mod redis_io;
 mod server;
 
-use std::env::Args;
-use std::io::BufReader;
-use std::net::{TcpListener, TcpStream};
-use std::thread::spawn;
-use crate::redis_io::RedisStream;
 use crate::server::start_server;
+use std::env::Args;
 
 const DEFAULT_LISTEN_PORT: u16 = 36379;
 const DEFAULT_LISTEN_HOST: &str = "127.0.0.1";
@@ -39,10 +35,6 @@ fn main() {
         .map(|arg| arg.replace("--port=", ""))
         .map(|arg| arg.parse::<u16>().unwrap_or(DEFAULT_TARGET_PORT))
         .unwrap_or(DEFAULT_TARGET_PORT);
-    let target_topology = args
-        .find(|arg| arg.starts_with("--topology="))
-        .map(|arg| arg.replace("--topology=", ""))
-        .unwrap_or("standalone".to_string());
 
-    start_server(listening_host, listening_port, target_host, target_port, target_topology);
+    start_server(listening_host, listening_port, target_host, target_port);
 }
