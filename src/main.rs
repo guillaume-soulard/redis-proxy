@@ -1,6 +1,7 @@
 mod resp;
 mod redis_io;
 mod server;
+mod commands;
 
 use crate::server::start_server;
 use std::env::Args;

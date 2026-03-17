@@ -59,16 +59,10 @@ pub fn get_remaining_lines_to_read(item: &String) -> u32 {
 }
 
 pub fn get_command_name(item: &String) -> Option<String> {
-    item.split_once("\r\n")
-        .map(|(command, _)| {
-            command.split_once("\r\n")
-                .map(|(command, _)| {
-                    command.split_once("\r\n")
-                        .map(|(command, _)| command.to_string())
-                        .unwrap_or(String::from(""))
-                })
-                .unwrap_or(String::from(""))
-        })
+    item.split("\r\n")
+        .skip(2)
+        .next()
+        .map(|s| s.to_string())
 }
 
 pub struct RespBuilder {
